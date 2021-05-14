@@ -29,7 +29,13 @@ fun <T : Any> Query<T>.asObservable(scheduler: Scheduler = Schedulers.io()): Obs
 private class QueryOnSubscribe<T : Any>(
   private val query: Query<T>
 ) : ObservableOnSubscribe<Query<T>> {
+
+  private val created = RuntimeException("asObservable called here")
+
   override fun subscribe(emitter: ObservableEmitter<Query<T>>) {
+    if (emitter.isDisposed()) {
+      throw RuntimeException("Disposed: $emitter", created)
+    }
     val listenerAndDisposable = QueryListenerAndDisposable(emitter, query)
     emitter.setDisposable(listenerAndDisposable)
     query.addListener(listenerAndDisposable)
